@@ -57,6 +57,13 @@ data class ProductDto(
     @SerializedName("title") val title: String,
     @SerializedName("description") val description: String
 )
+
+// Mapping Extension (Data Layer or Mapper Class)
+fun ProductDto.toDomain() = Product(
+    id = id,
+    title = title,
+    description = description
+)
 ```
 
 ### 4. API Service (Retrofit)
@@ -181,22 +188,32 @@ class ProductViewModel @Inject constructor(
 ## Phase 5: UI Layer (Jetpack Compose)
 *Declarative UI.*
 
-### 9. Build the Screen
+### 10. Build the Screen
 ```kotlin
 @Composable
-fun ProductScreen(viewModel: ProductViewModel = hiltViewModel()) {
+fun ProductScreen(
+    viewModel: ProductViewModel = hiltViewModel()
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(Modifier.fillMaxSize()) {
-        if (state.isLoading) CircularProgressIndicator(Modifier.align(Alignment.Center))
+        if (state.isLoading) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        }
         
-        LazyColumn {
-            items(state.products) { product ->
+        if (state.error != null) {
+            Text(
+                text = state.error, 
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(state.products, key = { it.id }) { product ->
                 ProductItem(product)
             }
         }
-        
-        state.error?.let { Text(it, color = Color.Red) }
     }
 }
 ```
